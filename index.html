@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSTE MCQ Practice</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+        .header { background: linear-gradient(135deg, #1e293b, #334155); padding: 24px; text-align: center; border-bottom: 2px solid #3b82f6; }
+        .header h1 { font-size: 1.6rem; color: #60a5fa; }
+        .header p { color: #94a3b8; margin-top: 4px; font-size: 0.9rem; }
+
+        .nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 20px; background: #1e293b; }
+        .nav button { padding: 10px 20px; border: 2px solid #334155; background: #1e293b; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+        .nav button:hover { border-color: #3b82f6; color: #60a5fa; }
+        .nav button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+        .welcome { text-align: center; padding: 60px 20px; }
+        .welcome h2 { font-size: 1.8rem; color: #60a5fa; margin-bottom: 16px; }
+        .welcome p { color: #94a3b8; font-size: 1.1rem; line-height: 1.6; }
+        .welcome .stats { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+        .welcome .stat-card { background: #1e293b; padding: 20px 30px; border-radius: 12px; border: 1px solid #334155; }
+        .welcome .stat-card .num { font-size: 2rem; color: #3b82f6; font-weight: bold; }
+        .welcome .stat-card .label { color: #94a3b8; font-size: 0.85rem; }
+
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .quiz-header h2 { color: #60a5fa; font-size: 1.3rem; }
+        .score-display { background: #1e293b; padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; color: #94a3b8; }
+        .score-display span { color: #34d399; font-weight: bold; }
+
+        .question-card { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 16px; border: 1px solid #334155; transition: border-color 0.3s; }
+        .question-card.answered-correct { border-color: #22c55e; }
+        .question-card.answered-wrong { border-color: #ef4444; }
+
+        .q-number { color: #3b82f6; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; }
+        .q-text { font-size: 1rem; line-height: 1.6; margin-bottom: 16px; color: #e2e8f0; }
+
+        .options { display: flex; flex-direction: column; gap: 8px; }
+        .option { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 8px; border: 1px solid #334155; cursor: pointer; transition: all 0.2s; }
+        .option:hover:not(.disabled) { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
+        .option.selected { border-color: #3b82f6; background: rgba(59,130,246,0.15); }
+        .option.correct { border-color: #22c55e; background: rgba(34,197,94,0.15); }
+        .option.wrong { border-color: #ef4444; background: rgba(239,68,68,0.15); }
+        .option.disabled { cursor: default; opacity: 0.7; }
+        .option.disabled.correct { opacity: 1; }
+        .option-letter { width: 28px; height: 28px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+        .option.correct .option-letter { background: #22c55e; color: white; }
+        .option.wrong .option-letter { background: #ef4444; color: white; }
+        .option-text { padding-top: 3px; line-height: 1.4; }
+
+        .explanation { margin-top: 12px; padding: 12px 16px; background: rgba(59,130,246,0.1); border-radius: 8px; border-left: 3px solid #3b82f6; font-size: 0.9rem; color: #94a3b8; display: none; }
+        .explanation.show { display: block; }
+
+        .actions { text-align: center; margin-top: 30px; padding-bottom: 40px; }
+        .btn { padding: 12px 32px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+        .btn:hover { background: #2563eb; }
+        .btn-outline { background: transparent; border: 2px solid #3b82f6; color: #60a5fa; }
+        .btn-outline:hover { background: rgba(59,130,246,0.1); }
+
+        .results { text-align: center; padding: 40px 20px; }
+        .results h2 { font-size: 1.8rem; margin-bottom: 10px; }
+        .results .score-big { font-size: 3rem; font-weight: bold; margin: 20px 0; }
+        .results .score-big.great { color: #22c55e; }
+        .results .score-big.ok { color: #f59e0b; }
+        .results .score-big.low { color: #ef4444; }
+        .results p { color: #94a3b8; margin-bottom: 20px; }
+
+        .progress-bar { width: 100%; height: 6px; background: #334155; border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+        .progress-bar .fill { height: 100%; background: #3b82f6; border-radius: 3px; transition: width 0.3s; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.2rem; }
+            .nav button { padding: 8px 14px; font-size: 0.8rem; }
+            .question-card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Fundamentals of Systems Thinking & Environment</h1>
+        <p>MCQ Practice - Rishihood Foundation Program</p>
+    </div>
+
+    <div class="nav" id="nav">
+        <button class="active" onclick="showHome()">Home</button>
+        <button onclick="loadSection(0)">Week 0</button>
+        <button onclick="loadSection(1)">Week 1</button>
+        <button onclick="loadSection(2)">Week 2</button>
+        <button onclick="loadSection(3)">Week 3</button>
+        <button onclick="loadSection(4)">Week 4</button>
+        <button onclick="loadSection(5)">Week 5</button>
+        <button onclick="loadSection(6)">Week 6</button>
+    </div>
+
+    <div class="container" id="content"></div>
+
+<script>
+const quizData = [
+    {
+        title: "Week 0 - Introduction & Complexity",
+        questions: [
+            {
+                q: "According to systems thinking, a system is defined as:",
+                options: ["A collection of unrelated objects", "A group of people working together", "Interacting elements producing a pattern over time", "A single cause leading to a single effect"],
+                correct: 2,
+                explanation: "A system is defined as interacting elements producing a pattern of behavior over time. The key is interaction and behavior, not just a collection of parts."
+            },
+            {
+                q: "Why do complex problems persist even after solutions are applied?",
+                options: ["Because problems are unsolvable", "Because there are no good solutions", "Because people are lazy", "Because only individual parts are addressed, not the whole system"],
+                correct: 3,
+                explanation: "Problems persist when only individual parts are addressed. Systemic problems require understanding how factors reinforce each other."
+            },
+            {
+                q: "What are 'Mental Models' in systems thinking?",
+                options: ["Computer simulations of problems", "Physical models of buildings", "Different ways people see the same system", "Mathematical equations"],
+                correct: 2,
+                explanation: "Mental models are the different ways people see the same system. They shape how we interpret situations and what solutions we consider."
+            },
+            {
+                q: "In the Forecasting Cascades activity, students were asked to:",
+                options: ["Blame a specific stakeholder", "Propose solutions immediately", "Map a chain of consequences over 5-6 steps without trying to solve", "Find the one true cause of a problem"],
+                correct: 2,
+                explanation: "The activity required tracing consequences step by step (first -> then -> then) for 5-6 steps. The rule was observation only, no attempts to fix or solve."
+            },
+            {
+                q: "What three dimensions were introduced in the course?",
+                options: ["Reading, writing, arithmetic", "Speed, accuracy, creativity", "Planning, executing, reviewing", "Knowledge (seeing systems), Skills (tracing consequences), Attitudes (openness to perspectives)"],
+                correct: 3,
+                explanation: "The three dimensions are: Knowledge - Seeing Systems, Skills - Tracing Consequences, and Attitudes - Openness to Perspectives."
+            },
+            {
+                q: "Which of the following is NOT a key attitude required in systems thinking?",
+                options: ["Openness - engaging with divergent viewpoints", "Rigidity - sticking to one perspective", "Integration - synthesizing diverse insights", "Humility - acknowledging incomplete understanding"],
+                correct: 1,
+                explanation: "Systems thinking requires openness, humility, and integration. Rigidity is the opposite of what's needed - we must be open to multiple perspectives."
+            },
+            {
+                q: "In the 'Power of Perspective' activity, students were NOT allowed to:",
+                options: ["Blame other roles", "Speak in English", "Take notes", "Ask questions"],
+                correct: 0,
+                explanation: "The rule was to articulate the problem exclusively from your assigned role's perspective. You were not allowed to blame other roles."
+            },
+            {
+                q: "Which pioneer is associated with 'Thinking in Systems: A Primer'?",
+                options: ["Russell Ackoff", "Peter Senge", "Donella Meadows", "Jay W. Forrester"],
+                correct: 2,
+                explanation: "Donella Meadows, an environmental scientist, authored 'Thinking in Systems: A Primer', one of the foundational texts in systems thinking."
+            },
+            {
+                q: "Real-world problems arise from:",
+                options: ["Single isolated causes", "Interconnected factors, not single causes", "Bad luck", "Individual failures only"],
+                correct: 1,
+                explanation: "Real-world problems arise from interconnected factors, not single causes. Factors reinforce each other, making the problem systemic."
+            },
+            {
+                q: "Systemic problems cannot be solved by:",
+                options: ["Identifying one single solution", "Understanding patterns", "Recognizing interconnections", "Considering multiple perspectives"],
+                correct: 0,
+                explanation: "Systemic problems cannot be solved by identifying one solution. They require understanding the interconnected nature of the problem."
+            }
+        ]
+    },
+    {
+        title: "Week 1 - Introduction to Systems Thinking",
+        questions: [
+            {
+                q: "What defines a system according to the course?",
+                options: ["A hierarchy of people", "Any collection of objects in one place", "A set of elements interconnected in a way that produces a pattern of behavior over time", "A computer program"],
+                correct: 2,
+                explanation: "A system is a set of elements that are interconnected in a way that produces a pattern of behavior over time. Three parts: elements, interconnections, purpose/behavior."
+            },
+            {
+                q: "A pile of chairs is NOT a system because:",
+                options: ["There are no interactions producing behavior over time", "Chairs are not living things", "Chairs are too simple", "There aren't enough chairs"],
+                correct: 0,
+                explanation: "A pile of chairs has no interactions producing behavior over time. The chairs don't respond to anything or create patterns. They are simply objects."
+            },
+            {
+                q: "An exam hall seating arrangement IS a system because:",
+                options: ["It has many chairs", "Rules, monitoring, and student responses create predictable behavior", "It is inside a building", "It looks organized"],
+                correct: 1,
+                explanation: "The seating arrangement + rules + monitoring + student responses create predictable behavior over time. The interactions make it a system."
+            },
+            {
+                q: "Which is NOT a clue that a system might be present?",
+                options: ["One-time random events", "Predictable patterns - you can anticipate what will happen next", "Repetition - same behavior occurs again and again", "Resistance to change - interventions don't produce expected results"],
+                correct: 0,
+                explanation: "Clues that a system is present include: repetition, predictable patterns, resistance to change, and behavior over time. One-time random events are not systemic."
+            },
+            {
+                q: "Systems thinking shifts focus from events to:",
+                options: ["Quick fixes", "More events", "Patterns and then to structure", "Individual blame"],
+                correct: 2,
+                explanation: "Systems thinking moves from Events (What just happened?) to Patterns (What's been happening?) to Structure (What causes the pattern?)."
+            },
+            {
+                q: "In the University Attendance System example, the 'stated purpose' vs 'revealed purpose' are:",
+                options: ["There is no difference", "Stated: punish students; Revealed: help students", "Both the same - facilitate learning", "Stated: facilitate learning; Revealed: ensure compliance and maintain credentialing standards"],
+                correct: 3,
+                explanation: "Stated purpose is to facilitate learning. But the revealed/actual purpose (based on behavior) is to ensure compliance and maintain credentialing standards."
+            },
+            {
+                q: "Linear thinking focuses on:",
+                options: ["System structure", "Multiple interacting factors and feedback loops", "Single cause, blame, and quick fixes", "Long-term patterns"],
+                correct: 2,
+                explanation: "Linear thinking looks for single cause, assigns blame, and applies quick fixes. It ignores feedback and delays."
+            },
+            {
+                q: "In the group project example, systems thinking reveals:",
+                options: ["The teacher is at fault", "Lazy students are the problem", "Groups should be eliminated", "Misaligned incentives, unequal workload visibility, and assessment structure issues"],
+                correct: 3,
+                explanation: "Systems thinking reveals structural issues: misaligned incentives, unequal workload visibility, social discomfort, and assessment structure that rewards outcomes, not process."
+            },
+            {
+                q: "Linear thinking's approach to Delhi air pollution would be:",
+                options: ["Evaluating success by long-term pattern changes", "Seeing pollution as an event and using quick actions like odd-even rule", "Examining trends across years and interacting causes", "Considering transport growth, crop burning, and urban design"],
+                correct: 1,
+                explanation: "Linear thinking sees pollution as an event, focuses on immediate AQI reduction with quick actions. Systems thinking examines long-term patterns and interacting causes."
+            },
+            {
+                q: "Which statement best describes how systems thinking differs from linear thinking regarding time?",
+                options: ["Linear thinking has a longer time horizon", "Both focus on short-term results", "Linear thinking focuses on short-term; systems thinking examines behavior patterns over extended periods", "Systems thinking ignores time"],
+                correct: 2,
+                explanation: "Linear thinking focuses on immediate results and quick wins. Systems thinking examines how interventions ripple through the system over weeks, months, or years."
+            }
+        ]
+    },
+    {
+        title: "Week 2 - Basic Elements of Systems",
+        questions: [
+            {
+                q: "What are the three basic elements of every system?",
+                options: ["Elements, interconnections, purpose", "Input, process, output", "Cause, effect, solution", "People, technology, rules"],
+                correct: 0,
+                explanation: "Every system has three components: Elements (parts), Interconnections (relationships/flows between parts), and Purpose/Behavior (the pattern that emerges over time)."
+            },
+            {
+                q: "Which of the following is an INTANGIBLE element?",
+                options: ["Trust, beliefs, and cultural norms", "Tools and equipment", "Buildings and physical spaces", "Resources and materials"],
+                correct: 0,
+                explanation: "Intangible elements include rules, policies, beliefs, values, cultural norms, emotions, trust, relationships, and information flows. They cannot be touched but profoundly influence behavior."
+            },
+            {
+                q: "Why is focusing solely on elements problematic?",
+                options: ["Elements are unimportant", "There are never enough elements", "Elements are too easy to find", "It's like 'not seeing the forest for the trees' - you lose sight of the whole system"],
+                correct: 3,
+                explanation: "Focusing solely on elements is like 'not seeing the forest for the trees.' Overanalyzing elements causes us to lose sight of the whole system."
+            },
+            {
+                q: "What are the two types of interconnections?",
+                options: ["Positive and negative", "Physical/material flows and information flows", "Strong and weak", "Internal and external"],
+                correct: 1,
+                explanation: "Interconnections are of two types: Physical/material flows (tangible items moving through the system) and Information flows (signals, feedback, or instructions guiding decisions)."
+            },
+            {
+                q: "Changing interconnections often has what effect compared to changing elements?",
+                options: ["Same impact", "Greater impact on system behavior", "Less impact on system behavior", "No effect at all"],
+                correct: 1,
+                explanation: "Changing interconnections often changes system behavior more than changing elements. How parts relate to each other matters more than which parts you have."
+            },
+            {
+                q: "A system's purpose is best determined by:",
+                options: ["Asking its leader", "Observing its behavior over time", "Reading its mission statement", "Looking at its budget"],
+                correct: 1,
+                explanation: "A system's purpose is deduced from its behavior over time, not from stated intentions. What a system does reveals its true purpose."
+            },
+            {
+                q: "System boundaries are:",
+                options: ["Chosen by the observer and defined by purpose", "Determined by government", "Always physical walls", "Fixed and universal"],
+                correct: 0,
+                explanation: "Boundaries are chosen by the observer, defined by purpose. There is no 'correct' boundary - only boundaries more or less useful for a given purpose."
+            },
+            {
+                q: "If you draw the system boundary around only the economy (excluding environment), pollution appears as:",
+                options: ["Non-existent", "An internal system outcome", "A system element", "An external 'side effect'"],
+                correct: 3,
+                explanation: "With a narrow boundary around only the economy, pollution appears as an external side effect. Including the environment makes pollution an internal system outcome."
+            },
+            {
+                q: "An OPEN system:",
+                options: ["Exchanges information, energy, and resources with its environment", "Has no boundary", "Does not exchange anything with its environment", "Is completely predictable"],
+                correct: 0,
+                explanation: "An open system exchanges information, energy, and resources with its environment. Most real-world systems and all social systems are open systems."
+            },
+            {
+                q: "The Iceberg Model suggests we should move from:",
+                options: ["Events to patterns to structure", "Simple to complex elements", "Structure to events", "Solutions to problems"],
+                correct: 0,
+                explanation: "The Iceberg Model moves from Events (visible, above water) to Patterns (recurring trends) to Structure (underlying causes). Most of the system is below the surface."
+            },
+            {
+                q: "A subsystem is:",
+                options: ["A closed system", "A smaller system within the boundary of a larger system", "An external factor", "A system that has failed"],
+                correct: 1,
+                explanation: "A subsystem is a smaller system within the boundary of a larger system, with its own elements, interconnections, and purposes."
+            },
+            {
+                q: "Optimizing a subsystem:",
+                options: ["Destroys the system", "Does not necessarily improve the whole system and may create conflicts", "Has no effect", "Always improves the whole system"],
+                correct: 1,
+                explanation: "Optimizing a subsystem does not necessarily improve the whole system and may create conflicts. Subsystem goals may conflict with the larger system's purpose."
+            }
+        ]
+    },
+    {
+        title: "Week 3 - DMF Case Study (System Analysis)",
+        questions: [
+            {
+                q: "What is DMF in the context of India's mining?",
+                options: ["Department of Mineral Finance", "District Mining Federation - a mechanism to channel mining royalties to community welfare", "District Management Forum", "Digital Mining Framework"],
+                correct: 1,
+                explanation: "DMF (District Mining Federation) is a mechanism to channel mining royalties into community welfare in mining-affected areas, focusing on health, education, livelihood, and environment."
+            },
+            {
+                q: "The DMF originates from which act?",
+                options: ["Forest Conservation Act, 1980", "Indian Mining Act, 2000", "Environmental Protection Act, 1986", "Mines and Minerals (Development and Regulation) Act, 1957 (amended 2015)"],
+                correct: 3,
+                explanation: "DMFs originate from the Mines and Minerals (Development and Regulation) Act (MMDR), 1957, which was amended in 2015."
+            },
+            {
+                q: "What is the STATED purpose of DMFs?",
+                options: ["To shut down all mines", "To channel mining royalties into community welfare in mining-affected areas", "To export minerals abroad", "To maximize mining output"],
+                correct: 1,
+                explanation: "The stated purpose is to channel mining royalties into community welfare in mining-affected areas, focusing on health, education, livelihood, environment, and infrastructure."
+            },
+            {
+                q: "What is the OBSERVED/ACTUAL purpose of DMFs based on their behavior?",
+                options: ["Replacing government functions", "Eliminating poverty completely", "Funds accumulate without strategic use, implementation leans toward infrastructure over human development", "Perfectly serving community welfare"],
+                correct: 2,
+                explanation: "The observed purpose shows: funds accumulate without strategic use, implementation favors infrastructure over human development, and communities remain minimally engaged."
+            },
+            {
+                q: "Which is an intangible element in the DMF system?",
+                options: ["Administrative dominance and norms around corruption", "District Collectors", "DMF trusts", "Planning documents"],
+                correct: 0,
+                explanation: "Intangible elements include administrative dominance, norms around acceptability of corruption, community engagement norms, and information signals about resource flows."
+            },
+            {
+                q: "In the DMF nested systems, the correct hierarchy (outer to inner) is:",
+                options: ["District -> DMF -> State -> Central", "DMF -> District -> State -> Central", "DMF -> Central -> State -> District", "Central Government -> State Government -> District Administration -> DMF"],
+                correct: 3,
+                explanation: "The nested system hierarchy from outer to inner is: Central Government -> State Government -> District Administration -> DMF."
+            },
+            {
+                q: "What role does the 'environment' play in the DMF system?",
+                options: ["It only affects mining operations", "It is irrelevant", "External factors like legal policy environment and civil society reports influence the system but are not controlled by it", "It is part of the system"],
+                correct: 2,
+                explanation: "The environment includes legal and policy frameworks (MMDR Act) and civil society accountability institutions (like iFOREST reports and NHRC directives) that influence but aren't controlled by DMF."
+            },
+            {
+                q: "The physical/material flow in the DMF system involves:",
+                options: ["No physical flows exist", "Only information exchange", "Only digital transactions", "Royalty contributions flowing to DMF trust, then to infrastructure projects"],
+                correct: 3,
+                explanation: "The physical/material flow involves royalty contributions from mining leaseholders flowing to the DMF trust, which then funds (mostly infrastructure) projects."
+            },
+            {
+                q: "A key information flow problem in DMFs is:",
+                options: ["Limited community participation and district administration playing a dominant role", "Excessive planning", "Too much community participation", "Perfect transparency"],
+                correct: 0,
+                explanation: "A key problem is limited community participation in decision-making, with the district administration playing a dominant role in planning and fund allocation."
+            },
+            {
+                q: "The paradox of India's mining districts is:",
+                options: ["All mining is illegal", "Mining areas are always wealthy", "Areas rich in mineral resources often remain among the poorest and most underdeveloped", "Mining has no environmental impact"],
+                correct: 2,
+                explanation: "The paradox is that India's mining-affected districts, despite being rich in mineral resources, often remain among the poorest and most underdeveloped regions."
+            }
+        ]
+    },
+    {
+        title: "Week 4 - Feedback Loops & System Archetypes (Part 1)",
+        questions: [
+            {
+                q: "Reinforcing feedback loops:",
+                options: ["Have no effect", "Stabilize the system", "Amplify changes, creating vicious or virtuous cycles leading to growth or collapse", "Always lead to positive outcomes"],
+                correct: 2,
+                explanation: "Reinforcing feedback loops amplify changes, creating vicious or virtuous cycles that lead to growth or collapse. They accelerate change in the direction already occurring."
+            },
+            {
+                q: "Balancing feedback loops are:",
+                options: ["The same as reinforcing loops", "Stabilizing or goal-seeking mechanisms that provide both stability and resistance to change", "Only found in mechanical systems", "Always destructive"],
+                correct: 1,
+                explanation: "Balancing feedback loops are stabilizing or goal-seeking mechanisms. They act as sources of both stability and resistance to change."
+            },
+            {
+                q: "What is a 'System Trap' (archetype)?",
+                options: ["A deliberate sabotage", "A physical trap in the system", "A bug in software", "System structures that consistently produce common patterns of problematic behavior"],
+                correct: 3,
+                explanation: "System traps are system structures that consistently produce common patterns of problematic behavior. Standard responses fail to fix them, which is why they're called traps."
+            },
+            {
+                q: "The 'Fixes that Fail' archetype describes:",
+                options: ["Perfect solutions that always work", "Solutions that were never implemented", "Short-term quick fixes that temporarily resolve symptoms but create unintended negative long-term consequences", "Problems that fix themselves"],
+                correct: 2,
+                explanation: "Fixes that Fail: a short-term quick-fix solution temporarily resolves a symptom but creates unintended, delayed, negative long-term consequences that worsen the original problem."
+            },
+            {
+                q: "India's free electricity for farmers is an example of which archetype?",
+                options: ["Tragedy of the Commons", "Fixes that Fail", "Success to the Successful", "Escalation"],
+                correct: 1,
+                explanation: "Free electricity -> more water extraction -> lower groundwater -> farmers extract even more water -> crisis worsens. A classic Fixes that Fail pattern with policy resistance."
+            },
+            {
+                q: "The 'Drifting Goals' archetype is also known as:",
+                options: ["The boiled frog syndrome", "The domino effect", "The butterfly effect", "The rising tide syndrome"],
+                correct: 0,
+                explanation: "Drifting Goals is also known as the 'boiled frog syndrome' - just as a frog in gradually heated water fails to notice danger, organizations slowly lower standards to match declining reality."
+            },
+            {
+                q: "In Drifting Goals, the feedback loop is:",
+                options: ["No loop is involved", "A loop that always improves things", "A negative reinforcing loop that accelerates declining performance", "A balancing loop that stabilizes performance"],
+                correct: 2,
+                explanation: "Drifting Goals involves a reinforcing feedback loop that accelerates declining performance. As performance slips, expectations decline, reducing corrective action further."
+            },
+            {
+                q: "The 'No-Fail Policy' (RTE 2009) is an example of:",
+                options: ["Fixes that Fail", "Escalation", "Limits to Success", "Drifting Goals"],
+                correct: 3,
+                explanation: "The No-Fail Policy exemplifies Drifting Goals: automatic promotion reduced the standard, leading to millions of students failing later exams as educational standards eroded."
+            },
+            {
+                q: "To fix 'Fixes that Fail', we should:",
+                options: ["Apply more short-term fixes", "Blame individuals", "Ignore the problem", "Focus on long-term solutions, improve transparency, use participatory decision-making, and align incentives"],
+                correct: 3,
+                explanation: "The way out is: focus on long-term rather than immediate gains, bring all actors together, improve communication, use participatory decision-making, and align incentives."
+            },
+            {
+                q: "To counter Drifting Goals, one should:",
+                options: ["Lower standards further", "Ignore performance metrics", "Maintain absolute standards and set goals based on best performance", "Only focus on short-term wins"],
+                correct: 2,
+                explanation: "Counter Drifting Goals by maintaining absolute standards, setting goals based on best performance, and encouraging continuous improvement instead of lowering expectations."
+            }
+        ]
+    },
+    {
+        title: "Week 5 - System Archetypes (Part 2)",
+        questions: [
+            {
+                q: "The 'Escalation' archetype involves:",
+                options: ["Two parties in an ever-intensifying cycle of competitive actions and reactions", "Declining standards", "A single reinforcing loop", "One party acting alone"],
+                correct: 0,
+                explanation: "Escalation is where two parties engage in an ever-intensifying cycle of competitive actions and reactions. Actions by one party are perceived as threats by the other."
+            },
+            {
+                q: "In Escalation, the key structural insight is:",
+                options: ["Only one party is at fault", "The problem will resolve itself", "Both parties are simultaneously victims and perpetrators", "Competition is always healthy"],
+                correct: 2,
+                explanation: "In escalation traps, both parties are simultaneously victims and perpetrators. 'Winning' the escalation often means losing in the broader system."
+            },
+            {
+                q: "The 'Limits to Success' archetype describes:",
+                options: ["Growth constrained by finite resources with diminishing returns", "Always declining performance", "Success that never ends", "Unlimited growth potential"],
+                correct: 0,
+                explanation: "Limits to Success: system expansion is limited by finite resources, continued efforts produce diminishing returns, and a reinforcing loop is countered by a balancing loop."
+            },
+            {
+                q: "'Success to the Successful' archetype means:",
+                options: ["Failure always leads to success", "If more resources go to one group, their success justifies even more resources, widening the gap", "Success is random", "Everyone succeeds equally"],
+                correct: 1,
+                explanation: "If more resources are allocated to group A over group B (of similar potential), A is more likely to succeed, justifying more resources and widening the gap over time."
+            },
+            {
+                q: "The winning athlete example illustrates which archetype?",
+                options: ["Tragedy of the Commons", "Drifting Goals", "Success to the Successful", "Fixes that Fail"],
+                correct: 2,
+                explanation: "Winning athletes get better training, healthcare, and coaches, giving them an edge. Losing athletes don't get these privileges, making them more prone to losing."
+            },
+            {
+                q: "'Growth and Underinvestment' is a combination of which two archetypes?",
+                options: ["Success to the Successful and Fixes that Fail", "Tragedy of the Commons and Escalation", "Limits to Success and Drifting Goals", "Fixes that Fail and Escalation"],
+                correct: 2,
+                explanation: "Growth and Underinvestment combines Limits to Success (growth encounters capacity constraints) and Drifting Goals (standards erode instead of investing in capacity)."
+            },
+            {
+                q: "In 'Shifting the Burden', the two types of solutions are:",
+                options: ["Symptomatic and fundamental", "Internal and external", "Short and long", "Fast and slow"],
+                correct: 0,
+                explanation: "Shifting the Burden involves two types of solutions: symptomatic (temporary relief with side effects) and fundamental (addressing root causes)."
+            },
+            {
+                q: "In 'Shifting the Burden', symptomatic solutions:",
+                options: ["Solve the problem permanently", "Are always preferable", "Have no side effects", "Provide temporary relief but their side effects undermine the capacity for fundamental solutions"],
+                correct: 3,
+                explanation: "Symptomatic solutions provide temporary relief, reduce pressure on the system, but produce side effects and delays that undermine the capacity for fundamental solutions."
+            },
+            {
+                q: "The 'Tragedy of the Commons' occurs when:",
+                options: ["Resources are privately owned", "Total usage exceeds what the system can support, leading to resource depletion", "Government manages all resources perfectly", "No one uses the common resource"],
+                correct: 1,
+                explanation: "Tragedy of the Commons: total usage exceeds what the system can support. Resource depletion leads to diminishing benefits for everyone."
+            },
+            {
+                q: "The Tragedy of the Commons is characteristic of:",
+                options: ["A digital system", "A closed system", "A mechanical system", "An open system"],
+                correct: 3,
+                explanation: "Tragedy of the Commons is characteristic of an open system. It identifies the causal connection between individual actions and collective results."
+            },
+            {
+                q: "Solutions to the Tragedy of the Commons include:",
+                options: ["Awareness, community ownership, and privatization", "Ignoring the problem", "Eliminating all users", "Using more resources"],
+                correct: 0,
+                explanation: "Solutions include awareness (understanding collective impact), community ownership (shared responsibility), and privatization (clear resource ownership)."
+            },
+            {
+                q: "Causes of the Tragedy of the Commons include:",
+                options: ["Complete cooperation", "Bounded rationality, greed, and lack of awareness/foresight", "Perfect information", "Too much regulation"],
+                correct: 1,
+                explanation: "Causes include bounded rationality (limited individual perspective), greed for more, and lack of awareness and foresight about collective consequences."
+            }
+        ]
+    },
+    {
+        title: "Week 6 - Behavior Over Time & Game Theory",
+        questions: [
+            {
+                q: "A Behavior Over Time (BoT) Graph shows:",
+                options: ["Organizational charts", "How a variable changes over time in a system", "Only financial data", "Static snapshots of a system"],
+                correct: 1,
+                explanation: "A Behavior Over Time (BoT) Graph shows how a variable changes over time in a system, helping identify patterns and trends in system behavior."
+            },
+            {
+                q: "BoT graphs are important because they:",
+                options: ["Are only used in economics", "Replace all other analysis tools", "Only show current status", "Capture systemic patterns, uncover underlying causes, and serve as foundation for loop analysis"],
+                correct: 3,
+                explanation: "BoT graphs capture systemic patterns (revealing recurring trends), uncover underlying causes (before diving into CLDs), and serve as a foundation for loop analysis."
+            },
+            {
+                q: "Dynamic equilibrium occurs when:",
+                options: ["All variables reach zero", "Inflow equals outflow", "The system stops completely", "Growth is unlimited"],
+                correct: 1,
+                explanation: "Dynamic equilibrium occurs when inflow equals outflow. The system is active but balanced."
+            },
+            {
+                q: "A systemic problem is characterized by being:",
+                options: ["Chronic, recurring, and resistant to previous fix attempts", "Only affecting one person", "New and never seen before", "Simple and easily solved"],
+                correct: 0,
+                explanation: "Guidelines for systemic problems: chronic and recurring, has a history, previous attempts didn't work or stopped working, and behavior over time shows classic shapes."
+            },
+            {
+                q: "A strong problem statement should include:",
+                options: ["Just a date", "Only the behavior name", "Only a solution", "Behavior, description over time, measurement of change, and time frame"],
+                correct: 3,
+                explanation: "A strong problem statement includes: the specific behavior, description over time, a quantifiable measure of change, and the specific time frame."
+            },
+            {
+                q: "When naming variables for system analysis, they should be:",
+                options: ["Nouns or noun phrases that are measurable and positive/neutral", "Verbs and verb phrases", "Always negative in tone", "As vague as possible"],
+                correct: 0,
+                explanation: "Variables should use nouns or noun phrases (not verbs), be measurable/observable, and be positive or neutral (e.g., 'Employment rate' not 'Lack of jobs')."
+            },
+            {
+                q: "Game Theory studies:",
+                options: ["Computer programming", "Decision-making when outcomes depend on others' choices", "Physical games", "Board games only"],
+                correct: 1,
+                explanation: "Game Theory is the study of decision-making when outcomes depend on others. It focuses on incentives, strategy, and stability."
+            },
+            {
+                q: "A 'Dominant Strategy' in game theory is:",
+                options: ["The most aggressive strategy", "Always the ethical choice", "A strategy that dominates other players", "A choice that provides a better outcome regardless of what the other player does"],
+                correct: 3,
+                explanation: "A dominant strategy provides a better outcome regardless of what the other player does. Important: dominant does not mean ethical - it means strategically safer."
+            },
+            {
+                q: "Nash Equilibrium is:",
+                options: ["When one player wins everything", "The best possible outcome for all", "An unstable situation", "A stable situation where no player benefits from changing alone"],
+                correct: 3,
+                explanation: "Nash Equilibrium is a stable situation where no player benefits from changing their strategy alone. Key insight: stable does not mean optimal."
+            },
+            {
+                q: "Robert Axelrod's tournament revealed that:",
+                options: ["Single games determine long-term outcomes", "Competition is always best", "When interaction repeats, cooperation becomes rational", "Aggression always wins"],
+                correct: 2,
+                explanation: "Axelrod's tournament showed that when interaction repeats, cooperation becomes rational. He changed structure, not human nature."
+            },
+            {
+                q: "The connection between Game Theory and Systems Thinking is:",
+                options: ["They are unrelated", "They are the same thing", "Game theory replaces systems thinking", "Game theory explains individual decision logic while systems thinking explains feedback loops and patterns"],
+                correct: 3,
+                explanation: "Game Theory explains individual decision logic. Systems Thinking explains feedback loops and patterns. Structure -> Incentives -> Choice -> Feedback -> Pattern."
+            },
+            {
+                q: "In the climate emissions game scenario, both parties reducing emissions yields (8,8) while both polluting yields (4,4). This illustrates:",
+                options: ["Cooperation produces the highest collective outcome but defection is individually tempting", "There is no dilemma", "Cooperation is irrational", "Pollution has no cost"],
+                correct: 0,
+                explanation: "Cooperation (both reduce: 8,8 = 16 total) beats mutual defection (both pollute: 4,4 = 8 total), but individual temptation to pollute (10) while other reduces creates the dilemma."
+            }
+        ]
+    }
+];
+
+let currentIndex = null;
+let answers = {};
+let scores = {};
+
+function setActiveNav(index) {
+    document.querySelectorAll('.nav button').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+    });
+}
+
+function showHome() {
+    setActiveNav(0);
+    currentIndex = null;
+    let totalQ = 0;
+    quizData.forEach(section => totalQ += section.questions.length);
+    document.getElementById('content').innerHTML = `
+        <div class="welcome">
+            <h2>Welcome to FSTE Quiz</h2>
+            <p>Practice multiple choice questions topic by topic.<br>Select a section from the navigation above to begin.</p>
+            <div class="stats">
+                <div class="stat-card"><div class="num">${quizData.length}</div><div class="label">Sections</div></div>
+                <div class="stat-card"><div class="num">${totalQ}</div><div class="label">Questions</div></div>
+                <div class="stat-card"><div class="num">${Object.keys(scores).length}</div><div class="label">Completed</div></div>
+            </div>
+        </div>`;
+}
+
+function loadSection(idx) {
+    currentIndex = idx;
+    setActiveNav(idx + 1);
+    answers[idx] = answers[idx] || {};
+    renderQuiz();
+}
+
+function renderQuiz() {
+    const data = quizData[currentIndex];
+    const ans = answers[currentIndex];
+    const total = data.questions.length;
+    const answered = Object.keys(ans).length;
+    const correct = Object.values(ans).filter(a => a.correct).length;
+
+    let html = `
+        <div class="quiz-header">
+            <h2>${data.title}</h2>
+            <div class="score-display">Score: <span>${correct}</span> / ${total}</div>
+        </div>
+        <div class="progress-bar"><div class="fill" style="width:${(answered/total)*100}%"></div></div>`;
+
+    data.questions.forEach((question, qi) => {
+        const a = ans[qi];
+        let cardClass = '';
+        if (a) cardClass = a.correct ? 'answered-correct' : 'answered-wrong';
+
+        html += `<div class="question-card ${cardClass}">
+            <div class="q-number">Question ${qi + 1} of ${total}</div>
+            <div class="q-text">${question.q}</div>
+            <div class="options">`;
+
+        const letters = ['A', 'B', 'C', 'D'];
+        question.options.forEach((opt, oi) => {
+            let optClass = '';
+            if (a) {
+                optClass = 'disabled';
+                if (oi === question.correct) optClass += ' correct';
+                else if (oi === a.selected && !a.correct) optClass += ' wrong';
+            }
+            html += `<div class="option ${optClass}" onclick="selectAnswer(${qi}, ${oi})">
+                <div class="option-letter">${letters[oi]}</div>
+                <div class="option-text">${opt}</div>
+            </div>`;
+        });
+
+        html += `</div>
+            <div class="explanation ${a ? 'show' : ''}">${question.explanation}</div>
+        </div>`;
+    });
+
+    if (answered === total) {
+        const pct = Math.round((correct / total) * 100);
+        let cls = pct >= 70 ? 'great' : pct >= 40 ? 'ok' : 'low';
+        let msg = pct >= 70 ? 'Great job!' : pct >= 40 ? 'Good effort, review the explanations.' : 'Keep studying, you\'ll improve!';
+        html += `<div class="results">
+            <h2>Quiz Complete!</h2>
+            <div class="score-big ${cls}">${pct}%</div>
+            <p>${correct} out of ${total} correct. ${msg}</p>
+            <button class="btn" onclick="resetSection()" style="margin-right:10px">Retry</button>
+            <button class="btn btn-outline" onclick="showHome()">Back to Home</button>
+        </div>`;
+    }
+
+    document.getElementById('content').innerHTML = html;
+}
+
+function selectAnswer(qi, oi) {
+    if (answers[currentIndex][qi]) return;
+    const question = quizData[currentIndex].questions[qi];
+    answers[currentIndex][qi] = {
+        selected: oi,
+        correct: oi === question.correct
+    };
+    if (answers[currentIndex][qi].correct) {
+        scores[currentIndex] = (scores[currentIndex] || 0) + 1;
+    }
+    renderQuiz();
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.question-card');
+        const nextUnanswered = quizData[currentIndex].questions.findIndex((_, i) => !answers[currentIndex][i]);
+        if (nextUnanswered >= 0 && cards[nextUnanswered]) {
+            cards[nextUnanswered].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 300);
+}
+
+function resetSection() {
+    answers[currentIndex] = {};
+    scores[currentIndex] = 0;
+    renderQuiz();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+showHome();
+</script>
+</body>
+</html>
